@@ -99,3 +99,6 @@ resource topLevelManagementGroupPrefix_landingZoneMgs 'Microsoft.Management/mana
     }
   }
 }]
+
+output landingZoneMgName string = enterpriseScaleManagementGroups_landingZone.name
+output identityMgName string = topLevelManagementGroupPrefix_platformMgs[2].name

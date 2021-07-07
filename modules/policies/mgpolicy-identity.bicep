@@ -1,42 +1,26 @@
 targetScope = 'tenant'
 
 @maxLength(10)
-@description('Provide a prefix (max 10 characters, unique at tenant-scope) for the Management Group hierarchy and other resources created as part of Enterprise-scale.')
-param topLevelManagementGroupPrefix string
+@description('Provide a prefix (max 10 characters, unique at tenant-scope) for the Management Group hierarchy')
+param prefix string
 
-@allowed([
-  'Yes'
-  'No'
-])
 @description('Select whether policy to deny inbound RDP should be assigned or not.')
-param denyRdpForIdentity string = 'No'
+param denyRdpForIdentity bool = false
 
-@allowed([
-  'Yes'
-  'No'
-])
 @description('Select whether policy to deny subnet without NSG should be assigned or not.')
-param denySubnetWithoutNsgForIdentity string = 'No'
+param denySubnetWithoutNsgForIdentity bool = false
 
-@allowed([
-  'Yes'
-  'No'
-])
-@description('Select whether policy to deny puplic IP should be assigned or not.')
-param denyPipForIdentity string = 'No'
+@description('Select whether policy to deny public IP should be assigned or not.')
+param denyPipForIdentity bool = false
 
-@allowed([
-  'Yes'
-  'No'
-])
 @description('Select whether policy to enable VM backup should be assigned or not.')
-param enableVmBackupForIdentity string = 'No'
+param enableVmBackupForIdentity bool = false
 
-var scope = '/providers/Microsoft.Management/managementGroups/${topLevelManagementGroupPrefix}-identity'
+var scope = '/providers/Microsoft.Management/managementGroups/${prefix}-identity'
 var policyDefinitions = {
-  denySubnetWithoutNsg: '/providers/Microsoft.Management/managementGroups/${topLevelManagementGroupPrefix}/providers/Microsoft.Authorization/policyDefinitions/Deny-Subnet-Without-Nsg'
-  denyPip: '/providers/Microsoft.Management/managementGroups/${topLevelManagementGroupPrefix}/providers/Microsoft.Authorization/policyDefinitions/Deny-PublicIP'
-  denyRdp: '/providers/Microsoft.Management/managementGroups/${topLevelManagementGroupPrefix}/providers/Microsoft.Authorization/policyDefinitions/Deny-RDP-From-Internet'
+  denySubnetWithoutNsg: '/providers/Microsoft.Management/managementGroups/${prefix}/providers/Microsoft.Authorization/policyDefinitions/Deny-Subnet-Without-Nsg'
+  denyPip: '/providers/Microsoft.Management/managementGroups/${prefix}/providers/Microsoft.Authorization/policyDefinitions/Deny-PublicIP'
+  denyRdp: '/providers/Microsoft.Management/managementGroups/${prefix}/providers/Microsoft.Authorization/policyDefinitions/Deny-RDP-From-Internet'
   deployVmBackup: '/providers/Microsoft.Authorization/policyDefinitions/98d0b9f8-fd90-49c9-88e2-d3baf3b0dd86'
 }
 var policyAssignmentNames = {
@@ -47,10 +31,10 @@ var policyAssignmentNames = {
 }
 var rbacOwner = '8e3af657-a8ff-443c-a75c-2fe8c4bcb635'
 var roleAssignmentNames = {
-  deployVmBackup: guid('${topLevelManagementGroupPrefix}identity${policyAssignmentNames.deployVmBackup}')
+  deployVmBackup: guid('${prefix}identity${policyAssignmentNames.deployVmBackup}')
 }
 
-resource policyAssignmentNames_deployVmBackup 'Microsoft.Authorization/policyAssignments@2018-05-01' = if (enableVmBackupForIdentity == 'Yes') {
+resource policyAssignmentNames_deployVmBackup 'Microsoft.Authorization/policyAssignments@2018-05-01' = if (enableVmBackupForIdentity) {
   name: policyAssignmentNames.deployVmBackup
   location: deployment().location
   identity: {
@@ -65,7 +49,7 @@ resource policyAssignmentNames_deployVmBackup 'Microsoft.Authorization/policyAss
   }
 }
 
-resource roleAssignmentNames_deployVmBackup 'Microsoft.Authorization/roleAssignments@2019-04-01-preview' = if (enableVmBackupForIdentity == 'Yes') {
+resource roleAssignmentNames_deployVmBackup 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = if (enableVmBackupForIdentity) {
   name: roleAssignmentNames.deployVmBackup
   properties: {
     principalType: 'ServicePrincipal'
@@ -77,7 +61,7 @@ resource roleAssignmentNames_deployVmBackup 'Microsoft.Authorization/roleAssignm
   ]
 }
 
-resource policyAssignmentNames_denyPip 'Microsoft.Authorization/policyAssignments@2018-05-01' = if (denyPipForIdentity == 'Yes') {
+resource policyAssignmentNames_denyPip 'Microsoft.Authorization/policyAssignments@2018-05-01' = if (denyPipForIdentity) {
   name: policyAssignmentNames.denyPip
   properties: {
     description: 'Deny-Public-IP'
@@ -87,7 +71,7 @@ resource policyAssignmentNames_denyPip 'Microsoft.Authorization/policyAssignment
   }
 }
 
-resource policyAssignmentNames_denyRdp 'Microsoft.Authorization/policyAssignments@2018-05-01' = if (denyRdpForIdentity == 'Yes') {
+resource policyAssignmentNames_denyRdp 'Microsoft.Authorization/policyAssignments@2018-05-01' = if (denyRdpForIdentity) {
   name: policyAssignmentNames.denyRdp
   properties: {
     description: 'Deny-RDP-from-Internet'
@@ -97,7 +81,7 @@ resource policyAssignmentNames_denyRdp 'Microsoft.Authorization/policyAssignment
   }
 }
 
-resource policyAssignmentNames_denySubnetWithoutNsg 'Microsoft.Authorization/policyAssignments@2018-05-01' = if (denySubnetWithoutNsgForIdentity == 'Yes') {
+resource policyAssignmentNames_denySubnetWithoutNsg 'Microsoft.Authorization/policyAssignments@2018-05-01' = if (denySubnetWithoutNsgForIdentity) {
   name: policyAssignmentNames.denySubnetWithoutNsg
   properties: {
     description: 'Deny-Subnet-Without-Nsg'
